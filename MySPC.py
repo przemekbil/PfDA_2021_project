@@ -57,7 +57,8 @@ def hist(data, label, lsl, usl, cp):
     plt.ylabel('Frequency of occurence')
     plt.title('Distribution of {} in a process with Cp={:.2}'.format(label, cp))
     plt.legend(['LSL', 'USL', 'PDF', label])
-    plt.show()
+    
+    return fig, ax
     
     
     
