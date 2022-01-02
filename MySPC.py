@@ -335,3 +335,61 @@ def xBarS(data_in, col, n=0):
     # return all the data points: lot with respective average, standard deviation within a lot and the violated SPC rules (if any)
     # Use all the data points, not only the ones that are trmmed for display
     return alldata
+
+
+
+# Define a function to plot 2 normal distributions pdf side by side for 2 samples
+def show_mean_diff(sample1, sample0, sig, det, tValue, det_dict=[]):
+    fig, ax = plt.subplots(figsize=(8,4))
+
+    #calculate mean values of sample 1 and sample 2
+    on_mean = sample1.mean()
+    off_mean = sample0.mean()
+
+    #calculate standard variation of sample 1 and 2
+    on_std = sample1.std()
+    off_std = sample0.std()
+
+    # calculate the extent of the X axis
+    # making sure that 99.9% of both distributions will be included
+    x_min = min(norm.interval(0.999, loc=on_mean, scale=on_std)[0], norm.interval(0.999, loc=off_mean, scale=off_std)[0])
+    x_max = max(norm.interval(0.999, loc=on_mean, scale=on_std)[1], norm.interval(0.999, loc=off_mean, scale=off_std)[1])
+
+    # generate 500 x values using x_min and x_max established above
+    x = np.linspace(x_min, x_max, 500)
+
+    # calculate the y values for 1st sample using normal distribution pdf
+    y_on = norm.pdf(x, loc=on_mean, scale=on_std)
+    # plot the first samples pdf
+    ax.plot(x, y_on, '-g',label='{} On'.format(det))
+    # add a vertical line for the 1st samples mean
+    ax.axvline(on_mean, color='g', linestyle='dashed', linewidth=1)
+
+    # calculate the y values for 2nd sample using normal distribution pdf
+    y_off = norm.pdf(x, loc=off_mean, scale=off_std)
+    # plot the second samples pdf
+    ax.plot(x, y_off, '-r', label='{} Off'.format(det))
+    # add a vertical line for the 2nd samples mean
+    ax.axvline(off_mean, color='r', linestyle='dashed', linewidth=1)
+    
+    # Add a rectangle displaying the difference in the means and calculated p-Value
+    # With an arrow pointing at the top of the sample 1 pdf
+    desc = ax.annotate(r'$\Delta$ in means ='+'{:.3f} \n p-Value={:.3f}'.format(on_mean-off_mean, tValue), # text to be displayed in the on-plot rectangle
+                   xy=(on_mean, max(y_on)), xycoords= 'data',                                              # coordinates of the arrow: top of the sample 1 pdf
+                   xytext=(0.7, 0.6), textcoords= 'axes fraction',                                         # coordinates of the text (using relative size of the axes)
+                   arrowprops=dict(facecolor='black',  arrowstyle="->", connectionstyle="arc3"),           # style of the arrow
+                   horizontalalignment='left', verticalalignment='bottom',                                 # anchor point text
+                   fontsize=11,                                                                            
+                   bbox=dict(boxstyle="round", fc="w", alpha=0.7)                                          # Stile of the box: rounded edges, white, 30% transparency
+                     )
+    
+    # Add a title of th eplot
+    if len(det_dict)>0:
+        ax.set_title("{} detected by {}".format(sig, det_dict[det]))
+    else:
+        ax.set_title("{} split by {}".format(sig, det))
+
+    # add a legend
+    ax.legend()
+
+    plt.show()
