@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import weibull_min, norm
 
-def hist(data, label, lsl, usl, cp):
+def hist(data, label, lsl, usl, cp, ppk=0):
     # data - Array containing the data to display
     # label - label to use in the title
     # lsl, usl - Lower and Upper Service Limits
@@ -55,7 +55,10 @@ def hist(data, label, lsl, usl, cp):
     plt.rcParams["figure.figsize"] = [8, 4]
     plt.xlabel('Mmeasurements')
     plt.ylabel('Frequency of occurence')
-    plt.title('Distribution of {} in a process with Cp={:.2}'.format(label, cp))
+    if ppk==0:
+        plt.title('Distribution of {} in a process with Cp={:.2}'.format(label, cp))
+    else:
+        plt.title('Distribution of {} in a process with Cp={:.2} and Ppk={:.2}'.format(label, cp, ppk))
     plt.legend(['LSL', 'USL', 'PDF', label])
     
     return fig, ax
@@ -261,7 +264,7 @@ def xmr(data_in, n=0):
 
 
 # Basis for this code taken from: https://towardsdatascience.com/quality-control-charts-guide-for-python-9bb1c859c051
-def xBarS(data_in, col, n=0):
+def xBarS(data_in, col, n=0, Show=True):
     # data_in - Pandas DataFrame containing the data to display
     # col - column from the data_in table to be displayed
     # n - optional, number of last datapoint to display; display all if not provided
@@ -276,61 +279,66 @@ def xBarS(data_in, col, n=0):
     # Find the points that are violating SPC rules and calculate the control limits
     alldata, x_bar, mr_bar, ucl, lcl, mr_ucl, mr_lcl = spc_stats(dim[col], std[col], avg_parts_in_lot)    
     
-    # Make sure n is greater than 0 and smaller than the lenght of the data array
-    if n>0 and n<len(dim):
-        # Trim the number of displayed poinints to the last n:
-        data = alldata[-n:]
-        #dim = dim[-n:]    
-
-    # Plot x and mR charts
-    fig, axs = plt.subplots(2, figsize=(8,8), sharex=True)
-
-    # X chart
-    # Graph all the points 
-    axs[0].plot(data['Dim'], linestyle='-', marker='o', color='black')
-
+    # Plot the graphs only if Show = True
+    # It is true by default, but it can be switched off. This function fill only return the points that triggered
+    # the SPC Rules and will not plot anything
+    if(Show):
     
-    # Add red dot when there are too many points on the same side of the mean
-    axs[0].plot(data[data['Reason'].str[-5]=="1"]['Dim'], linestyle="", marker='o', color='blue') 
-    
-    # Add red dot when there are too many points on the same side of the mean
-    axs[0].plot(data[data['Reason'].str[-4]=="1"]['Dim'], linestyle="", marker='o', color='yellow')    
-    
-    # Add red dot when there are too many points on the same side of the mean
-    axs[0].plot(data[data['Reason'].str[-3]=="1"]['Dim'], linestyle="", marker='o', color='orange')    
-    
-    # Add red dot where Dim is over UCL or under LCL
-    axs[0].plot(data[data['Reason'].str[-1]=="1"]['Dim'], linestyle="", marker='o', color='red')    
+        # Make sure n is greater than 0 and smaller than the lenght of the data array
+        if n>0 and n<len(dim):
+            # Trim the number of displayed poinints to the last n:
+            data = alldata[-n:]
+            #dim = dim[-n:]    
 
-    # Plot blue horizontal line at the process mean
-    axs[0].axhline(x_bar, color='blue')
+        # Plot x and mR charts
+        fig, axs = plt.subplots(2, figsize=(8,8), sharex=True)
 
-    # Plot red dotted lines at UCL and LCL
-    axs[0].axhline(ucl, color = 'red', linestyle = 'dashed')
-    axs[0].axhline(lcl, color = 'red', linestyle = 'dashed')
-
-    # Set Chart title and axis labels
-    axs[0].set_title('X-Bar Chart for {}'.format(col))
-    axs[0].set(xlabel='Lot number', ylabel='Measurement')
+        # X chart
+        # Graph all the points 
+        axs[0].plot(data['Dim'], linestyle='-', marker='o', color='black')
 
 
-    # mR chart
-    # Graph all the points 
-    axs[1].plot( np.abs(data['variability']), linestyle='-', marker='o', color='black')
+        # Add red dot when there are too many points on the same side of the mean
+        axs[0].plot(data[data['Reason'].str[-5]=="1"]['Dim'], linestyle="", marker='o', color='blue') 
 
-    # Add red dot where Dim is over UCL
-    axs[1].plot(data[data['Reason'].str[-2]=="1"]['variability'], linestyle="", marker='o', color='red')
+        # Add red dot when there are too many points on the same side of the mean
+        axs[0].plot(data[data['Reason'].str[-4]=="1"]['Dim'], linestyle="", marker='o', color='yellow')    
 
-    # Plot blue horizontal line at the mR mean
-    axs[1].axhline(mr_bar, color='blue')
+        # Add red dot when there are too many points on the same side of the mean
+        axs[0].plot(data[data['Reason'].str[-3]=="1"]['Dim'], linestyle="", marker='o', color='orange')    
 
-    # Plot red dotted line at UCL and LCL
-    axs[1].axhline(mr_ucl, color='red', linestyle ='dashed')
-    axs[1].axhline(mr_lcl, color='red', linestyle ='dashed')
+        # Add red dot where Dim is over UCL or under LCL
+        axs[0].plot(data[data['Reason'].str[-1]=="1"]['Dim'], linestyle="", marker='o', color='red')    
 
-    axs[1].set_ylim(bottom=0)
-    axs[1].set_title('Standard deviation Chart for {}'.format(col))
-    axs[1].set(xlabel='Part', ylabel='Range')
+        # Plot blue horizontal line at the process mean
+        axs[0].axhline(x_bar, color='blue')
+
+        # Plot red dotted lines at UCL and LCL
+        axs[0].axhline(ucl, color = 'red', linestyle = 'dashed')
+        axs[0].axhline(lcl, color = 'red', linestyle = 'dashed')
+
+        # Set Chart title and axis labels
+        axs[0].set_title('X-Bar Chart for {}'.format(col))
+        axs[0].set(xlabel='Lot number', ylabel='Measurement')
+
+
+        # mR chart
+        # Graph all the points 
+        axs[1].plot( np.abs(data['variability']), linestyle='-', marker='o', color='black')
+
+        # Add red dot where Dim is over UCL
+        axs[1].plot(data[data['Reason'].str[-2]=="1"]['variability'], linestyle="", marker='o', color='red')
+
+        # Plot blue horizontal line at the mR mean
+        axs[1].axhline(mr_bar, color='blue')
+
+        # Plot red dotted line at UCL and LCL
+        axs[1].axhline(mr_ucl, color='red', linestyle ='dashed')
+        axs[1].axhline(mr_lcl, color='red', linestyle ='dashed')
+
+        axs[1].set_ylim(bottom=0)
+        axs[1].set_title('Standard deviation Chart for {}'.format(col))
+        axs[1].set(xlabel='Lot Number', ylabel='Standard deviation')
     
     # return all the data points: lot with respective average, standard deviation within a lot and the violated SPC rules (if any)
     # Use all the data points, not only the ones that are trmmed for display
