@@ -118,7 +118,8 @@ def spc_stats(dim, std_in=[], n=1):
         lcl = x_bar-mr_bar*2.66
 
         # Calculate Upper Control Limits for mR chart (there is no lower CL for mR chart)
-        mr_ucl = mr_bar+mr_bar*3.267          
+        mr_ucl = mr_bar+mr_bar*3.267
+        mr_lcl = -0.1
     
     # Shewhart SPC control chart rules:
     # https://analyse-it.com/docs/user-guide/process-control/shewhart-control-chart-rules
@@ -138,15 +139,11 @@ def spc_stats(dim, std_in=[], n=1):
     data['Reason'] = 0
     
     # Check for measurements aoutside the contro limits
-    for index, row in data.iterrows():
-        x = row[0]
-        mr = row[1]
-        
-        if x>ucl or x<lcl:
-            data.loc[index, 'Reason'] += 1
-            
-        if mr>mr_ucl:
-            data.loc[index, 'Reason'] += 2
+    data['Reason'] = np.where(data['Dim']>ucl, data['Reason']+1, data['Reason'])
+    data['Reason'] = np.where(data['Dim']<lcl, data['Reason']+1, data['Reason'])
+    # Check the variability: std_var or mR
+    data['Reason'] = np.where(data['variability']>mr_ucl, data['Reason']+2, data['Reason'])
+    data['Reason'] = np.where(data['variability']<mr_lcl, data['Reason']+2, data['Reason'])
             
     
     # check if there ar at least 'n_side' points on the same side of the mean line
