@@ -35,3 +35,9 @@ The 'Project.ipynb' is set up to simulate the effect of a single metal cutting p
 After all dimensions in all the parts are generated, resulting dimensions are compared against the dimensional tolerance to determine whether parts are machined correctly. Parts that are non-conformant (manufactured outside the tolerance) are marked as scrap.
 Various tools are tested to check what is the best predictor for the lot consisting of scrap parts: Statistical Process Control charts (developed by me) and Process Performance Index. 
 At the end, Logistic Regression is used to categorise if lots have scrapped parts or not. Logistic regression is executed using sklearn package with a help of imbalanced-learn package.
+
+## File structure of this repository
+
+* Project.ipynb - the main file of this project, Jupyter Notebook consisting of all simulation and analysis steps
+* MySPC.py - python file consisting of the custom Histogram and SPC (Statistical Process Control) plots developed by me for this project. This file is imported and used by 'Project.ipynb' notebook
+* README.md - this file
